@@ -32,12 +32,24 @@ for key, values in glossary_dict.items():
     glossary_dict[key] = dict(Counter(values))
     #print(key, glossary_dict[key])
 
-expensedata_testindexes = np.where(expensedata['Y_'].isnull())
+expensedata_testindexes = list(np.where(expensedata['Y_'].isnull())[0])
 print(expensedata_testindexes)
 
 for i in expensedata_testindexes:
-    expensedata.loc[i,'Y_'] ="HELLO"
-print(expensedata)
+
+    for merchantdata in str(expensedata.loc[i,'Merchant']).split():
+        print(merchantdata)
+        merchantdata = merchantdata.upper()
+        keylist = []
+        for keyword in merchantdata.split():
+            if keyword in glossary_dict:
+                keylist += glossary_dict[keyword]
+        if keylist:
+            expensedata.loc[i, 'Y_'] = max(keylist, key=keylist.count)
+        else:
+            expensedata.loc[i, 'Y_'] = ""
+    expensedata.to_csv("test.csv")
+
 #
 # for merchant in expensedata_test['Merchant'].values:
 #     merchant = merchant.upper()
