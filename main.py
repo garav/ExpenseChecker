@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import logging
+import os.path
 from collections import Counter
 glossary_dict = {}
 initial_keyword_val = 1
@@ -25,30 +26,35 @@ for i in range(len(expensedata_train_np)):
         if keyword in ignore_city:
             continue
         if keyword not in glossary_dict:
-            glossary_dict[keyword] = [expensedata_train_np[i][5]]
+            glossary_dict[keyword] = [expensedata_train_np[i][3]]
         else:
-            glossary_dict[keyword].append(expensedata_train_np[i][5])
+            glossary_dict[keyword].append(expensedata_train_np[i][3])
 for key, values in glossary_dict.items():
     glossary_dict[key] = dict(Counter(values))
-    #print(key, glossary_dict[key])
+    # print(key, glossary_dict[key])
 
 expensedata_testindexes = list(np.where(expensedata['Y_'].isnull())[0])
-print(expensedata_testindexes)
+#print(expensedata_testindexes)
 
 for i in expensedata_testindexes:
 
-    for merchantdata in str(expensedata.loc[i,'Merchant']).split():
-        print(merchantdata)
-        merchantdata = merchantdata.upper()
+    for keyword in str(expensedata.loc[i,'Merchant']).split():
         keylist = []
-        for keyword in merchantdata.split():
-            if keyword in glossary_dict:
-                keylist += glossary_dict[keyword]
+        keyword = keyword.upper()
+        if keyword in ignore_city:
+            continue
+        if keyword in glossary_dict:
+            keylist += glossary_dict[keyword]
+
         if keylist:
             expensedata.loc[i, 'Y_'] = max(keylist, key=keylist.count)
         else:
             expensedata.loc[i, 'Y_'] = ""
-    expensedata.to_csv("test.csv")
+    if os.path.exists("expense_copy.csv"):
+        os.remove("expense_copy.csv")
+    os.rename("expense.csv", "expense_copy.csv")
+
+    expensedata.to_csv("expense.csv", index=False)
 
 #
 # for merchant in expensedata_test['Merchant'].values:
